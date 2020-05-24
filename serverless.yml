@@ -1,0 +1,41 @@
+service:
+  name: activity-mkh-dev
+
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-webpack
+  - serverless-iam-roles-per-function
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, env:STAGE, 'dev'}
+  region: ${opt:region, env:AWS_REGION, 'us-east-1'}
+
+  apiGateway:
+    minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
+
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+
+  tracing:
+    lambda: true
+    apiGateway: true
+
+package:
+  # individually: true
+  excludeDevDependencies: true
+
+functions:
+  GetRecent:
+    handler: src/lambda/getRecentActivity.handler
+    events:
+      - http:
+          method: get
+          path: recent
+          cors: true
