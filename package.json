@@ -11,9 +11,11 @@
     "jsonwebtoken": "^8.5.1",
     "middy": "^0.36.0",
     "source-map-support": "^0.5.10",
+    "uuid": "^8.1.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
+    "@types/uuid": "^8.0.0",
     "@types/aws-lambda": "^8.10.17",
     "@types/jsonwebtoken": "^8.5.0",
     "@types/node": "^10.12.18",
