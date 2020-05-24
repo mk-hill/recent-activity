@@ -35,6 +35,11 @@ package:
   excludeDevDependencies: true
 
 functions:
+  Auth:
+    environment:
+      JWT_CERT: ${env:JWT_CERT}
+    handler: src/lambda/auth.handler
+
   GetRecent:
     handler: src/lambda/getRecentActivity.handler
     events:
@@ -63,7 +68,7 @@ functions:
           method: post
           path: ''
           cors: true
-
+          authorizer: Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
