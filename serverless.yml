@@ -106,6 +106,30 @@ functions:
           - 'xray:PutTraceSegments'
         Resource: '*'
 
+  CreateGitLabActivity:
+    environment:
+      GITLAB_USERNAME: ${env:GITLAB_USERNAME}
+    handler: src/lambda/http/createGitLabActivity.handler
+    events:
+      - http:
+          method: post
+          path: gitlab
+          cors: true
+          authorizer: Auth
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ACTIVITIES_TABLE}
+      - Effect: 'Allow'
+        Action:
+          - 'xray:PutTelemetryRecords'
+        Resource: '*'
+      - Effect: 'Allow'
+        Action:
+          - 'xray:PutTraceSegments'
+        Resource: '*'
+
 resources:
   Resources:
     ActivitiesTable:
