@@ -1,8 +1,9 @@
 import { DocumentClient } from '../aws';
-import { createLogger } from '../util';
+import { createLogger } from '../logger';
 import { Activity } from '../model';
 
 const TableName = process.env.ACTIVITIES_TABLE;
+const IndexName = process.env.TIME_INDEX;
 const partition = process.env.PARTITION;
 
 const db = new DocumentClient();
@@ -14,6 +15,7 @@ async function getRecentActivity(limit: number) {
   log.debug(`Getting most recent ${limit} activities`);
 
   const data = await query({
+    IndexName,
     KeyConditionExpression: '#partition = :partition',
     ExpressionAttributeValues: {
       ':partition': partition,

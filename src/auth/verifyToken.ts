@@ -1,6 +1,6 @@
 import { JwtPayload } from './JwtPayload';
 import { verify } from 'jsonwebtoken';
-import { createLogger } from '../util';
+import { createLogger } from '../logger';
 
 const log = createLogger('auth/verifyToken');
 const jwtCert = process.env.JWT_CERT;

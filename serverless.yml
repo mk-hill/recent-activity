@@ -23,7 +23,7 @@ provider:
   environment:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     ACTIVITIES_TABLE: activities-mkh-${self:provider.stage}
-    ACTIVITY_INDEX: ActivityIndex
+    TIME_INDEX: TimeIndex
     PARTITION: ${env:PARTITION}
 
   tracing:
@@ -41,7 +41,7 @@ functions:
     handler: src/lambda/auth.handler
 
   GetRecent:
-    handler: src/lambda/getRecentActivity.handler
+    handler: src/lambda/http/getRecentActivity.handler
     events:
       - http:
           method: get
@@ -51,7 +51,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ACTIVITIES_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ACTIVITIES_TABLE}/index/${self:provider.environment.TIME_INDEX}
       - Effect: 'Allow'
         Action:
           - 'xray:PutTelemetryRecords'
@@ -61,8 +61,8 @@ functions:
           - 'xray:PutTraceSegments'
         Resource: '*'
 
-  CreateCustom:
-    handler: src/lambda/createCustomActivity.handler
+  CreateCustomActivity:
+    handler: src/lambda/http/createCustomActivity.handler
     events:
       - http:
           method: post
@@ -98,14 +98,14 @@ resources:
           - AttributeName: activityId
             AttributeType: S
         KeySchema:
-          - AttributeName: partition
+          - AttributeName: activityId
             KeyType: HASH
-          - AttributeName: performedAt
-            KeyType: RANGE
         GlobalSecondaryIndexes:
-          - IndexName: ${self:provider.environment.ACTIVITY_INDEX}
+          - IndexName: ${self:provider.environment.TIME_INDEX}
             KeySchema:
-              - AttributeName: activityId
+              - AttributeName: partition
                 KeyType: HASH
+              - AttributeName: performedAt
+                KeyType: RANGE
             Projection:
               ProjectionType: ALL

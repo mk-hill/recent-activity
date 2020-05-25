@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 
-import { createLogger } from '../util';
+import { createLogger } from '../logger';
 import { Activities } from '../data';
 import { Activity } from '../model';
 import { CreateCustomActivityRequest } from '../requests/CreateCustomActivityRequest';
