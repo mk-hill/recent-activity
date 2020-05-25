@@ -1,13 +1,13 @@
 import 'source-map-support/register';
 
 import { createLogger } from '../../logger';
-import { createCustomActivity } from '../../services';
+import { createActivity } from '../../services';
 import { createHttpHandler } from '../util';
 
 const logger = createLogger('http/createCustomActivity');
 
 async function eventHandler(event) {
-  const savedActivity = await createCustomActivity(JSON.parse(event.body));
+  const savedActivity = await createActivity(JSON.parse(event.body));
   return {
     body: savedActivity,
     statusCode: 201,

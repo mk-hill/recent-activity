@@ -1,13 +1,14 @@
 import { createLogger } from '../logger';
 import { Activities } from '../data';
-import { Activity } from '../model';
+import { Activity } from '../models';
+import { buildActivityResponse } from './buildActivityResponse';
 
 const log = createLogger('services/createCustomActivity');
 
-const removePartitionInfo = (activities: Activity[]): Activity[] => activities.map(({ partition, ...activityProps }) => activityProps);
+const mapToResponseData = (activities: Activity[]): Activity[] => activities.map(buildActivityResponse);
 
 export function getRecentActivity(limit: string): Promise<Activity[]> {
   const numActivities = parseInt(limit) || 20;
   log.info(`Retrieving most recent ${numActivities} activities`);
-  return Activities.getRecent(numActivities).then(removePartitionInfo);
+  return Activities.getRecent(numActivities).then(mapToResponseData);
 }

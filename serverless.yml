@@ -83,6 +83,29 @@ functions:
           - 'xray:PutTraceSegments'
         Resource: '*'
 
+  CreateGitHubActivity:
+    environment:
+      GITHUB_SECRET: ${env:GITHUB_SECRET}
+    handler: src/lambda/http/createGitHubActivity.handler
+    events:
+      - http:
+          method: post
+          path: github
+          cors: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ACTIVITIES_TABLE}
+      - Effect: 'Allow'
+        Action:
+          - 'xray:PutTelemetryRecords'
+        Resource: '*'
+      - Effect: 'Allow'
+        Action:
+          - 'xray:PutTraceSegments'
+        Resource: '*'
+
 resources:
   Resources:
     ActivitiesTable:

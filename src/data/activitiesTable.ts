@@ -1,6 +1,6 @@
 import { DocumentClient } from '../aws';
 import { createLogger } from '../logger';
-import { Activity } from '../model';
+import { Activity } from '../models';
 
 const TableName = process.env.ACTIVITIES_TABLE;
 const IndexName = process.env.TIME_INDEX;

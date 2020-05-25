@@ -2,12 +2,13 @@ import { v4 as uuid } from 'uuid';
 
 import { createLogger } from '../logger';
 import { Activities } from '../data';
-import { Activity } from '../model';
+import { Activity } from '../models';
 import { CreateCustomActivityRequest } from '../requests/CreateCustomActivityRequest';
+import { buildActivityResponse } from './buildActivityResponse';
 
 const log = createLogger('services/createCustomActivity');
 
-export async function createCustomActivity({
+export async function createActivity({
   title,
   description,
   id = uuid(),
@@ -25,5 +26,5 @@ export async function createCustomActivity({
     type,
   };
   log.info('Creating activity', { activity });
-  return Activities.create(activity);
+  return Activities.create(activity).then(buildActivityResponse);
 }
