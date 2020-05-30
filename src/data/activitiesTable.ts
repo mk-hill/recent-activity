@@ -11,28 +11,36 @@ const log = createLogger('data/activitiesTable');
 
 const query = (params) => db.query({ TableName, ...params }).promise();
 
-async function getRecentActivity(limit: number) {
-  log.debug(`Getting most recent ${limit} activities`);
+/**
+ * Limit by number of items and/or minimum date
+ */
+async function getRecentActivity({ limit: Limit, minDate }: { limit?: number; minDate?: string }) {
+  try {
+    log.info(`Getting most recent activities`, { Limit, minDate });
 
-  const data = await query({
-    IndexName,
-    KeyConditionExpression: '#partition = :partition',
-    ExpressionAttributeValues: {
-      ':partition': partition,
-    },
-    ExpressionAttributeNames: {
-      '#partition': 'partition',
-    },
-    ScanIndexForward: false,
-    Limit: limit,
-  });
+    const data = await query({
+      IndexName,
+      KeyConditionExpression: `#partition = :partition${minDate ? ' and performedAt > :minDate' : ''}`,
+      ExpressionAttributeValues: {
+        ':partition': partition,
+        ':minDate': minDate,
+      },
+      ExpressionAttributeNames: {
+        '#partition': 'partition',
+      },
+      ScanIndexForward: false,
+      Limit,
+    });
 
-  if (!data.Items.length) {
-    throw new Error(`Could not find any matching activities`);
+    if (!data.Items.length) {
+      throw new Error(`Could not find any matching activities`);
+    }
+
+    log.debug(`Retrieved data`, { data });
+    return data.Items as Activity[];
+  } catch (error) {
+    log.error('Unable to retrieve recent activity', { error });
   }
-
-  log.info(`Retrieved data`, { data });
-  return data.Items as Activity[];
 }
 
 async function createActivity(activity: Activity) {

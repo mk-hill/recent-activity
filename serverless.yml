@@ -5,11 +5,13 @@ custom:
   webpack:
     webpackConfig: ./webpack.config.js
     includeModules: true
+  logRetentionInDays: 30
 
 # Add the serverless-webpack plugin
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
+  - serverless-plugin-log-retention
 
 provider:
   name: aws
@@ -25,6 +27,8 @@ provider:
     ACTIVITIES_TABLE: activities-mkh-${self:provider.stage}
     TIME_INDEX: TimeIndex
     PARTITION: ${env:PARTITION}
+    WEBSITE_BUCKET: ${env:WEBSITE_BUCKET}
+    TIME_ZONE: ${env:TIME_ZONE}
 
   tracing:
     lambda: true
@@ -121,6 +125,29 @@ functions:
         Action:
           - dynamodb:PutItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ACTIVITIES_TABLE}
+      - Effect: 'Allow'
+        Action:
+          - 'xray:PutTelemetryRecords'
+        Resource: '*'
+      - Effect: 'Allow'
+        Action:
+          - 'xray:PutTraceSegments'
+        Resource: '*'
+
+  PublishGroupedActivities:
+    handler: src/lambda/schedule/publishGroupedActivities.handler
+    events:
+      - schedule: cron(5 6 * * ? *)
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+          - s3:GetObject
+        Resource: arn:aws:s3:::${self:provider.environment.WEBSITE_BUCKET}/*
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ACTIVITIES_TABLE}/index/${self:provider.environment.TIME_INDEX}
       - Effect: 'Allow'
         Action:
           - 'xray:PutTelemetryRecords'

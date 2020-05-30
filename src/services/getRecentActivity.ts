@@ -10,5 +10,5 @@ const mapToResponseData = (activities: Activity[]): Activity[] => activities.map
 export function getRecentActivity(limit: string): Promise<Activity[]> {
   const numActivities = parseInt(limit) || 20;
   log.info(`Retrieving most recent ${numActivities} activities`);
-  return Activities.getRecent(numActivities).then(mapToResponseData);
+  return Activities.getRecent({ limit: numActivities }).then(mapToResponseData);
 }
