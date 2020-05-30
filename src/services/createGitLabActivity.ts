@@ -2,12 +2,12 @@ import { v4 as uuid } from 'uuid';
 
 import { createLogger } from '../logger';
 import { Activities } from '../data';
-import { GitLabActivity, Activity } from '../models';
+import { MergeRequest, Activity } from '../models';
 import { buildActivityResponse } from './buildActivityResponse';
 
 const log = createLogger('services/createGitLabActivity');
 
-interface GitLabActivityData {
+interface MergeRequestData {
   activityId: string;
   repoName: string;
   title: string;
@@ -24,10 +24,10 @@ interface GitLabActivityData {
   approvals: number;
 }
 
-export async function createGitLabActivity({ performedAt, mergedAt, closedAt, ...data }: GitLabActivityData): Promise<Activity> {
+export async function createMergeRequest({ performedAt, mergedAt, closedAt, ...data }: MergeRequestData): Promise<Activity> {
   log.info('Creating GitLab activity', { data });
   try {
-    const activity: GitLabActivity = {
+    const activity: MergeRequest = {
       ...data,
       publicId: uuid(),
       isPrivate: true,

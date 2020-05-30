@@ -4,7 +4,7 @@ import { createLogger } from '../../logger';
 import { createHttpHandler } from '../util';
 import { verifyGitHubSignature as isSignatureValid } from '../../auth';
 import { GitHubWebhookPayload } from '../../requests';
-import { createGitHubPushActivity } from '../../services';
+import { createGitHubPush } from '../../services';
 
 const logger = createLogger('http/createGitHubActivity');
 
@@ -37,7 +37,7 @@ async function eventHandler(event) {
   const { commits, compare: diffUrl } = payload;
   const { name: repoName, url: repoUrl, private: isPrivate } = payload.repository;
 
-  const createdActivity = await createGitHubPushActivity({ activityId, commits, diffUrl, repoName, repoUrl, isPrivate, performedAt });
+  const createdActivity = await createGitHubPush({ activityId, commits, diffUrl, repoName, repoUrl, isPrivate, performedAt });
   return {
     statusCode: 201,
     body: createdActivity,

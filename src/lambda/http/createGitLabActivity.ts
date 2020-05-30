@@ -3,7 +3,7 @@ import 'source-map-support/register';
 import { createLogger } from '../../logger';
 import { createHttpHandler } from '../util';
 import { GitLabMergeRequestPayload } from '../../requests';
-import { createGitLabActivity } from '../../services';
+import { createMergeRequest } from '../../services';
 
 const logger = createLogger('http/createGitLabActivity');
 
@@ -52,7 +52,7 @@ async function eventHandler(event) {
   };
 
   logger.info('Persed GitLab activity data', { data });
-  const savedActivity = await createGitLabActivity(data);
+  const savedActivity = await createMergeRequest(data);
   return {
     body: savedActivity,
     statusCode: 201,

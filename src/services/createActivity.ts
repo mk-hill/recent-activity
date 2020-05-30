@@ -13,7 +13,7 @@ export async function createActivity({
   description,
   id = uuid(),
   date = new Date().toISOString(),
-  source = 'custom',
+  source = 'other',
   type = 'other',
 }: CreateCustomActivityRequest): Promise<Activity> {
   const activity: Activity = {

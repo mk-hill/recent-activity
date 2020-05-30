@@ -1,6 +1,6 @@
 import { createLogger } from '../logger';
 import { Activities } from '../data';
-import { GitHubPushActivity, Activity, Commit } from '../models';
+import { GitHubPush, Activity, Commit } from '../models';
 import { buildActivityResponse } from './buildActivityResponse';
 
 const log = createLogger('services/createGitHubActivity');
@@ -15,11 +15,11 @@ interface GitHubPushWebhookData {
   performedAt: string;
 }
 
-export async function createGitHubPushActivity({ performedAt, ...props }: GitHubPushWebhookData): Promise<Activity> {
+export async function createGitHubPush({ performedAt, ...props }: GitHubPushWebhookData): Promise<Activity> {
   log.info('Creating GitHub push activity from webhook data', { webhookData: props });
   try {
     const numCommits = props.commits.length;
-    const activity: GitHubPushActivity = {
+    const activity: GitHubPush = {
       ...props,
       partition: process.env.PARTITION,
       performedAt: new Date(performedAt).toISOString(),

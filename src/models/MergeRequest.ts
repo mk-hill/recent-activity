@@ -1,11 +1,8 @@
-import { Activity } from './Activity';
+import { GitActivity } from './GitActivity';
 
-export interface GitLabActivity extends Activity {
-  repoName?: string;
-  isPrivate?: boolean;
+export interface MergeRequest extends GitActivity {
   state?: string;
   squash?: boolean;
-  performedAt?: string;
   mergedAt?: string;
   closedAt?: string;
   mergedBy?: string;

@@ -4,6 +4,7 @@ export interface Commit {
   distinct: boolean;
   message: string;
   timestamp: string;
+  date?: Date;
   url: string;
   author: Author;
   committer: Author;
