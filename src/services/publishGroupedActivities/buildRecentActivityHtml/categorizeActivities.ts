@@ -1,6 +1,6 @@
-import { Activity, GitHubPush, MergeRequest, Commit, Repo } from '../../models';
-import { sortByDate, isGitHubPush, isMergeRequest } from './util';
-import { createLogger } from '../../logger';
+import { Activity, GitHubPush, MergeRequest, Commit, Repo } from '../../../models';
+import { sortByDate, isGitHubPush, isMergeRequest } from '../util';
+import { createLogger } from '../../../logger';
 
 const log = createLogger('buildActivityHtml/categorizeActivities');
 
@@ -46,7 +46,7 @@ export function categorizeActivities(activities: Activity[]): CategorizedActivit
           hasPrivateActivity = true;
         } else {
           // Overwrite repo details in case previous activity was made on it when it was private
-          // nameToRepo[repoName].isPrivate = isPrivate;
+          nameToRepo[repoName].isPrivate = isPrivate;
         }
 
         commits.forEach((commit: Commit) => {

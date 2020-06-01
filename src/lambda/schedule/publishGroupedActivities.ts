@@ -5,17 +5,14 @@ import { publishGroupedActivities } from '../../services';
 const logger = createLogger('schedule/publishGroupedActivities');
 
 /**
- * Group past activities on website every night
+ * Publish grouped activities to website
  */
-export const handler: ScheduledHandler = (event, context) => {
+export const handler: ScheduledHandler = async (event, context) => {
   logger.info('Received event', { event, context });
-
-  publishGroupedActivities()
-    .then(() => {
-      logger.info('Updated website contents');
-    })
-    .catch((error) => {
-      logger.error('Unable to update website contents', { error });
-      throw error;
-    });
+  try {
+    await publishGroupedActivities();
+  } catch (error) {
+    logger.error('Unable to update publish grouped activities', { error });
+    throw error;
+  }
 };

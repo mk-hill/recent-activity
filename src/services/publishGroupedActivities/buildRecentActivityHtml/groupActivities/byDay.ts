@@ -1,15 +1,12 @@
-import { Activity, GitHubPush } from '../../models';
-import { createLogger } from '../../logger';
-import { ActivityGroup } from './ActivityGroup';
-import { isSameDay, isGitHubPush, groupByDay, mostRecentDate } from './util';
+import { Activity, GitHubPush } from '../../../../models';
+import { createLogger } from '../../../../logger';
+import { isSameDay, isGitHubPush, groupByDay, mostRecentDate, sortAllByDate } from '../../util';
 
-const log = createLogger('services/buildActivityHtml');
+const log = createLogger('groupActivities/byDay');
 
-export function buildRecentActivityHtml(activities: Activity[], maxDays = 10): string {
+export function groupActivitiesByDay(activities: Activity[], maxDays = 10): Activity[][] {
   try {
-    log.info(`Building HTML for ${activities.length} activities`);
-
-    activities.forEach(populateDates);
+    log.info(`Grouping ${activities.length} activities by day`);
 
     const pushes = activities.filter(isGitHubPush).map(splitIfHasCommitsInMultipleDays).flat();
 
@@ -21,9 +18,9 @@ export function buildRecentActivityHtml(activities: Activity[], maxDays = 10): s
       activitiesByDay,
     });
 
-    return activitiesByDay.map((activitiesInSingleDay) => ActivityGroup.toHtml(activitiesInSingleDay)).join('\n');
+    return activitiesByDay;
   } catch (error) {
-    log.error('Unable to build recent activities HTML', { error });
+    log.error('Unable to group activities', { error });
     throw error;
   }
 }
@@ -34,9 +31,7 @@ export function buildRecentActivityHtml(activities: Activity[], maxDays = 10): s
 function splitByDate(activities: Activity[]): Activity[][] {
   const dayToActivities = groupByDay(activities);
   log.debug('Grouped activities by day', { dayToActivities });
-  return Object.entries(dayToActivities)
-    .sort(([dateKey1], [dateKey2]) => new Date(dateKey2).getTime() - new Date(dateKey1).getTime())
-    .map(([_, activities]) => activities);
+  return sortAllByDate(Object.values(dayToActivities), true);
 }
 
 /**
@@ -62,18 +57,4 @@ function splitIfHasCommitsInMultipleDays(activity: Activity): Activity[] | Activ
       performedAt: date.toISOString(),
     };
   });
-}
-
-/**
- * Populate dates in place
- */
-function populateDates(activity: Activity) {
-  const { performedAt } = activity;
-  activity.date = new Date(performedAt);
-  if (isGitHubPush(activity)) {
-    (activity as GitHubPush).commits.forEach((commit) => {
-      commit.date = new Date(commit.timestamp);
-    });
-  }
-  return activity;
 }
