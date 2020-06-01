@@ -1,5 +1,7 @@
-import { GitHubPush, Activity } from '../../../models';
-import { isGitHubPush } from '.';
+import { GitHubPush, Activity } from '../../../../models';
+import { isGitHubPush } from '../';
+
+export { midnightNDaysAgo, dateValues } from './offset';
 
 const today = new Date();
 const epoch = new Date(0);
@@ -78,48 +80,4 @@ export function populateDates(activity: Activity): Activity {
     });
   }
   return activity;
-}
-
-let localOffset;
-
-/**
- * @returns server local time offset from desired time zone
- */
-function getLocalOffset() {
-  if (localOffset) return localOffset;
-  const localDate = today.getDate();
-  const localHours = today.getHours();
-
-  const [correctDate, correctHours] = today
-    .toLocaleString('en-US', { timeZone, hour: 'numeric', day: 'numeric', hour12: false })
-    .split(',')
-    .map((s) => parseInt(s));
-
-  if (localDate === correctDate) return correctHours - localHours;
-  if (localDate > correctDate) return 24 - correctHours + localHours;
-  if (localDate < correctDate) return -(24 - localHours + correctHours);
-}
-
-/**
- * @returns last midnight if 0
- */
-export function midnightNDaysAgo(daysAgo = 0): Date {
-  const msInDay = 24 * 60 * 60 * 1000;
-  const d = new Date(today.getTime() - msInDay * daysAgo);
-  const offset = getLocalOffset();
-  let hours;
-
-  if (localOffset >= 0) {
-    hours = 0 + offset;
-  } else {
-    d.setDate(d.getDate() - 1);
-    hours = 24 + offset;
-  }
-
-  d.setMinutes(0);
-  d.setSeconds(0);
-  d.setMilliseconds(0);
-  d.setHours(hours);
-
-  return d;
 }
