@@ -1,7 +1,7 @@
 import { GitHubPush, Activity } from '../../../../models';
-import { isGitHubPush } from '../';
+import { isGitHubPush, midnightNDaysAgo } from '../';
 
-export { midnightNDaysAgo, dateValues } from './offset';
+export { midnightNDaysAgo } from './offset';
 
 const today = new Date();
 const epoch = new Date(0);
@@ -42,11 +42,8 @@ export const isSameDay = (d1: Date, d2: Date): boolean => monthDayYear(d1) === m
 
 export const isToday = (date: Date): boolean => isSameDay(date, today);
 
-const monthYear = (date: Date): string => date.toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone });
-
-const dayOfMonth = (date: Date): number => parseInt(date.toLocaleString('en-US', { day: 'numeric', timeZone }));
-
-export const isYesterday = (date: Date): boolean => monthYear(today) === monthYear(date) && dayOfMonth(today) - dayOfMonth(date) === 1;
+export const isYesterday = (date: Date): boolean =>
+  date.getTime() > midnightNDaysAgo(1).getTime() && date.getTime() < midnightNDaysAgo(0).getTime();
 
 export const groupByDay = <T extends HasDateKey>(ar: T[], initialMap: Record<string, T[]> = {}): Record<string, T[]> =>
   ar.reduce((dateToItem, item) => {

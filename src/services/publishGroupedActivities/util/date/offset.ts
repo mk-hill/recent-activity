@@ -1,92 +1,76 @@
-import { timeZone } from '.';
-
-interface DateValues {
-  month: number;
-  day: number;
-  year: number;
-  hour: number;
-}
+import { timeZone as correctTimeZone } from '.';
 
 const today = new Date();
-let localOffset: number;
+const msInMin = 60 * 1000;
+const minsInDay = 24 * 60;
+
+let correctDateUtcMidnight: Date;
+let currentUtcOffset: number;
 let lastMidnight: Date;
 
-export function dateValues(date = today, local = false): DateValues {
-  const [month, day, year, hour] = date
+const padZero = (val: string | number, desiredLength: number) => `${val}`.padStart(desiredLength, '0');
+
+interface DateValues {
+  month: string;
+  day: string;
+  year: string;
+  hour: string;
+  minute: string;
+  second: string;
+}
+
+/**
+ * @returns 0 padded strings for each value based on time zone, uses local time if no time zone given
+ */
+function dateValuesForTimeZone(date = today, timeZone?: string): DateValues {
+  const [month, day, year, hour, minute, second] = date
     .toLocaleString('en-US', {
-      timeZone: local ? undefined : timeZone,
-      hour: 'numeric',
-      day: 'numeric',
-      month: 'numeric',
-      year: 'numeric',
+      timeZone,
       hour12: false,
     })
     .match(/(\d+)/g)
-    .map((s) => parseInt(s));
+    .map((val) => padZero(val, 2));
 
   return {
     year,
     month,
     day,
     hour,
+    minute,
+    second,
   };
 }
 
 /**
- * Absolutely not correct, but should be enough for before/after comparison
+ * @returns ISO string format with time zone values retained as though it were UTC, uses local time if no time zone given
  */
-function sumDateForComparison({ year, month, day, hour }: DateValues) {
-  const monthsInYr = 12;
-  const maxDaysInMonth = 31;
-  const hrsInDay = 24;
-
-  const dayVal = day * hrsInDay;
-  const monthVal = month * hrsInDay * maxDaysInMonth;
-  const yearVal = year * hrsInDay * maxDaysInMonth * monthsInYr;
-
-  return yearVal + monthVal + dayVal + hour;
+function toFakeIso(date: Date, timeZone?: string) {
+  const { year, month, day, hour, minute, second } = dateValuesForTimeZone(date, timeZone);
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}.${padZero(date.getMilliseconds(), 3)}Z`;
 }
 
 /**
- * @returns server local time offset from desired time zone
+ * @returns UTC offset in minutes for given time zone, uses local time if no time zone given
  */
-function getLocalOffset() {
-  if (localOffset) return localOffset;
-  const local = dateValues(today, true);
-  const correct = dateValues(today);
+const currentUtcOffsetForTimeZone = (timeZone?: string) => (today.getTime() - new Date(toFakeIso(today, timeZone)).getTime()) / msInMin;
 
-  const lSum = sumDateForComparison(local);
-  const cSum = sumDateForComparison(correct);
-
-  if (lSum === cSum) localOffset = 0;
-  if (lSum > cSum) localOffset = 24 - correct.hour + local.hour;
-  if (lSum < cSum) localOffset = -(24 - local.hour + correct.hour);
-
-  console.log('getLocalOffset -> localOffset', localOffset);
-  return localOffset;
+function utcMidnightForCurrentDate() {
+  const d = new Date(toFakeIso(today, correctTimeZone));
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
 }
 
 /**
- * @returns last midnight if 0
+ * @returns midnight for correct time zone given number of days ago. last midnight if 0 or none given
  */
 export function midnightNDaysAgo(daysAgo = 0): Date {
-  const msInHr = 60 * 60 * 1000;
-  const offset = getLocalOffset();
-
   if (!lastMidnight) {
-    const d = new Date();
-    if (offset > 0) {
-      const { day, month, year } = dateValues(d);
-      d.setFullYear(year);
-      d.setMonth(month - 1);
-      d.setDate(day);
-    }
-    d.setMinutes(0);
-    d.setSeconds(0);
-    d.setMilliseconds(0);
-    d.setHours(0);
-    lastMidnight = new Date(d.getTime() + msInHr * offset);
+    correctDateUtcMidnight = utcMidnightForCurrentDate();
+    currentUtcOffset = currentUtcOffsetForTimeZone(correctTimeZone);
+    lastMidnight = new Date(correctDateUtcMidnight.getTime() + currentUtcOffset * msInMin);
   }
 
-  return new Date(lastMidnight.getTime() - msInHr * 24 * daysAgo);
+  if (daysAgo === 0) return lastMidnight;
+
+  return new Date(lastMidnight.getTime() - msInMin * minsInDay * daysAgo);
 }
