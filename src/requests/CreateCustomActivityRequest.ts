@@ -5,4 +5,8 @@ export interface CreateCustomActivityRequest {
   source?: string;
   type?: string;
   description?: string;
+  links?: {
+    title: Record<string, string>;
+    description: Record<string, string>;
+  };
 }

@@ -1,3 +1,5 @@
+import { Activity } from '../../../models';
+
 export const link = (textContent: string, href: string): string => `<a href="${href}" target="blank">${textContent}</a>`;
 
 export const referenceWords = (
@@ -10,6 +12,30 @@ export const referenceWords = (
   commit: referencesForWord('commit', commits),
   mr: referencesForWord('merge request', mergeRequests, numMerged),
 });
+
+/**
+ * Replace first occurrence with link
+ */
+export function titleWithLinks(activity: Activity): string {
+  if (!activity?.links?.title) return activity.title;
+  const { title, links } = activity;
+  return Object.entries(links.title).reduce(
+    (titleText, [linkContent, linkUrl]) => titleText.replace(linkContent, link(linkContent, linkUrl)),
+    title
+  );
+}
+
+/**
+ * Replace first occurrence with link
+ */
+export function descriptionWithLinks(activity: Activity): string {
+  if (!activity?.links?.description) return activity.description;
+  const { description, links } = activity;
+  return Object.entries(links.description).reduce(
+    (descriptionText, [linkContent, linkUrl]) => descriptionText.replace(linkContent, link(linkContent, linkUrl)),
+    description
+  );
+}
 
 interface ReferenceWords {
   word: string;

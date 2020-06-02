@@ -1,9 +1,22 @@
 import { createLogger } from '../../../logger';
 import { Activity, GitHubPush, MergeRequest, Commit, Repo, GitActivity } from '../../../models';
-import { referenceWords, link, monthDay, isToday, isYesterday, isSameDay, fullDate, mostRecentDate, timeZone, sortByDate } from '../util';
 import { categorizeActivities } from './categorizeActivities';
 import { ActivityDetail, createDetail } from './ActivityDetail';
 import { GroupBy } from './groupActivities';
+import {
+  referenceWords,
+  link,
+  monthDay,
+  isToday,
+  isYesterday,
+  isSameDay,
+  fullDate,
+  mostRecentDate,
+  timeZone,
+  sortByDate,
+  titleWithLinks,
+  descriptionWithLinks,
+} from '../util';
 
 const log = createLogger('buildActivityHtml/ActivityGroup');
 
@@ -106,7 +119,7 @@ export class ActivityGroup {
   }
 
   get titleHtml(): string {
-    if (this.allActivities.length === 1 && this.otherActivities.length) return this.allActivities[0].title;
+    if (this.allActivities.length === 1 && this.otherActivities.length) return titleWithLinks(this.allActivities[0]);
 
     const numCommits = this.commits.length;
     const numMergeRequests = this.mergeRequests.length;
@@ -212,8 +225,8 @@ export class ActivityGroup {
     if (!this.hasDetail) return;
 
     if (this.allActivities.length === 1 && this.otherActivities.length && !this.hasPrivateActivity) {
-      const { description, date } = this.allActivities[0];
-      return [createDetail(description, date)];
+      const activity = this.allActivities[0];
+      return [createDetail(descriptionWithLinks(activity), activity.date)];
     }
 
     const numDetails = this.numberOfDetailsWhichCanBeRendered;
@@ -222,8 +235,8 @@ export class ActivityGroup {
     const hasMultipleDetails = numDetails > 1;
     const details: ActivityDetail[] = [];
 
-    this.otherActivities.forEach(({ title, date }) => {
-      details.push(createDetail(title, date));
+    this.otherActivities.forEach((activity) => {
+      details.push(createDetail(titleWithLinks(activity), activity.date));
     });
 
     this.repos.forEach(({ isPrivate, name, commits, mergeRequests, url }) => {

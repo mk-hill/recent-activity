@@ -8,4 +8,8 @@ export interface Activity {
   performedAt?: string;
   savedAt?: string;
   date?: Date;
+  links?: {
+    title: Record<string, string>;
+    description: Record<string, string>;
+  };
 }
