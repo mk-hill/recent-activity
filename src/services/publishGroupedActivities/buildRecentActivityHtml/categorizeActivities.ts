@@ -1,5 +1,5 @@
-import { Activity, GitHubPush, MergeRequest, Commit, Repo } from '../../../models';
-import { sortByDate, isGitHubPush, isMergeRequest } from '../util';
+import { Activity, GitHubPush, MergeRequest, Commit, Repo, GitActivity } from '../../../models';
+import { sortByDate, isGitHubPush, isMergeRequest, isRepoCreation } from '../util';
 import { createLogger } from '../../../logger';
 
 const log = createLogger('buildActivityHtml/categorizeActivities');
@@ -71,6 +71,17 @@ export function categorizeActivities(activities: Activity[]): CategorizedActivit
         return mergeRequests.push(mergeRequest);
       }
 
+      if (isRepoCreation(activity)) {
+        const creation = activity as GitActivity;
+        const { repoName, isPrivate, repoUrl } = creation;
+
+        if (!nameToRepo[repoName]) nameToRepo[repoName] = createRepo(repoName, isPrivate, repoUrl);
+
+        nameToRepo[repoName].creationActivity = creation;
+
+        return;
+      }
+
       log.debug('Found other activity', { activity });
 
       return otherActivities.push(activity);
@@ -108,5 +119,6 @@ function createRepo(name: string, isPrivate: boolean, url = ''): Repo {
     commitMap: {},
     commits: [],
     mergeRequests: [],
+    creationActivity: null,
   };
 }

@@ -27,6 +27,7 @@ export class ActivityGroup {
   private otherActivities: Activity[];
 
   private repos: Repo[] = [];
+  private newRepos: Repo[] = [];
   private sources: Set<string> = new Set();
   private types: Set<string> = new Set();
   private commits: Commit[] = [];
@@ -65,6 +66,8 @@ export class ActivityGroup {
     Object.entries(categorizeActivities(activities)).forEach(([key, value]) => {
       this[key] = value;
     });
+
+    this.newRepos = this.repos.filter((repo) => repo.creationActivity);
 
     log.info('Created activity group', {
       groupSize: this.allActivities.length,
@@ -126,6 +129,19 @@ export class ActivityGroup {
     const numRepos = this.repos.length;
     const { repo, commit, mr } = referenceWords(numRepos, numCommits, numMergeRequests);
 
+    const numCreated = this.newRepos.length;
+    const { repo: created } = referenceWords(numCreated);
+
+    if (numRepos && numRepos === numCreated) {
+      const { num, word } = created;
+      if (numCreated === 1) {
+        const { isPrivate, name, url } = this.repos[0];
+        return `Created a new repository${!isPrivate ? `: ${link(name, url)}` : ''}`;
+      } else {
+        return `Created ${num} new ${word}${numCommits > numCreated ? ` and ${commit.num} ${commit.word}` : ''}`; // Initial commit redundant
+      }
+    }
+
     if (numCommits && !numMergeRequests) {
       // Only github pushes
       if (numRepos === 1) {
@@ -138,7 +154,9 @@ export class ActivityGroup {
         }
         return `Created ${commit.num} ${commit.word} in ${link(name, url)}`;
       }
-      return `Created ${commit.num} ${commit.word} in ${numRepos} repositories`;
+      return numCreated
+        ? `Created ${created.num} ${created.word} and ${commit.num} ${commit.word}`
+        : `Created ${commit.num} ${commit.word} in ${numRepos} repositories`;
     }
 
     if (numMergeRequests && !numCommits) {
@@ -147,7 +165,9 @@ export class ActivityGroup {
     }
 
     if (numCommits && numMergeRequests) {
-      return `Created ${commit.num} ${commit.word} and ${mr.num} ${mr.word} in ${repo.num} ${repo.word}`;
+      return numCreated
+        ? `Created ${created.num} ${created.word}, ${commit.num} ${commit.word}, and ${mr.num} ${mr.word}`
+        : `Created ${commit.num} ${commit.word} and ${mr.num} ${mr.word} in ${repo.num} ${repo.word}`;
     }
 
     return 'Multiple activities';
@@ -198,9 +218,15 @@ export class ActivityGroup {
     const hasMultipleOtherActivities = this.otherActivities.length > 1;
     const hasSingleActivityWithDescription = this.allActivities.length === 1 && !!this.allActivities[0].description;
     const hasMultiplePublicCommits = this.repos.reduce((t, { isPrivate, commits }) => (isPrivate ? t : t + commits.length), 0) > 1;
+    const hasNewRepoAndCommit = this.newRepos.length && this.repos.some((repo) => repo.commits.length);
 
     this._hasDetail =
-      hasMultipleRepos || hasMergedMr || hasMultipleOtherActivities || hasSingleActivityWithDescription || hasMultiplePublicCommits;
+      hasMultipleRepos ||
+      hasMergedMr ||
+      hasMultipleOtherActivities ||
+      hasSingleActivityWithDescription ||
+      hasMultiplePublicCommits ||
+      hasNewRepoAndCommit;
 
     log.debug(`This group ${this._hasDetail ? 'has' : 'does not have any'} details`, {
       hasMultipleRepos,
@@ -215,8 +241,9 @@ export class ActivityGroup {
 
   get numberOfDetailsWhichCanBeRendered(): number {
     let n = this.otherActivities.length;
-    this.repos.forEach(({ isPrivate, commits, mergeRequests }) => {
+    this.repos.forEach(({ isPrivate, commits, mergeRequests, creationActivity }) => {
       n += isPrivate ? 1 : commits.length + mergeRequests.length; // Group private repo details
+      if (creationActivity) n++;
     });
     return n;
   }
@@ -239,7 +266,7 @@ export class ActivityGroup {
       details.push(createDetail(titleWithLinks(activity), activity.date));
     });
 
-    this.repos.forEach(({ isPrivate, name, commits, mergeRequests, url }) => {
+    this.repos.forEach(({ isPrivate, name, commits, mergeRequests, url, creationActivity }) => {
       const numCommits = commits.length;
       const numMrs = mergeRequests.length;
       const numMerged = mergeRequests.filter((mr) => mr.state === 'merged').length;
@@ -251,6 +278,9 @@ export class ActivityGroup {
           // Don't duplicate title for single private repo activity
           if (hasMultipleDetails) details.push(createDetail(`Created ${num} ${word} in a private repository`, commits));
         } else {
+          if (hasMultipleRepos && creationActivity) {
+            details.push(createDetail(`Created a new repository: ${link(name, url)}`, creationActivity.date));
+          }
           if (canRenderAll) {
             commits.forEach(({ message, url: commitUrl, date }) => {
               const repoLink = hasMultipleRepos ? `${link(name, url)}: ` : ''; // Don't add redundant repo name

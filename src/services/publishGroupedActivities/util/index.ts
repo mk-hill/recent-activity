@@ -22,6 +22,7 @@ export { link, referenceWords, titleWithLinks, descriptionWithLinks } from './st
 export const isGitHubPush = ({ source, type }: Activity): boolean => source === 'github' && type === 'push';
 export const isMergeRequest = ({ source, type }: Activity): boolean => source === 'gitlab' && type === 'mergeRequest';
 export const isGitActivity = ({ source }: Activity): boolean => source === 'github' || source === 'gitlab';
+export const isRepoCreation = ({ source, type }: Activity): boolean => source === 'github' && type === 'create';
 
 export const splitMatching = <T>(predicate: (T) => boolean, ar: T[]): { matching: T[]; rest: T[] } =>
   ar.reduce(
