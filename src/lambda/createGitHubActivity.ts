@@ -1,10 +1,10 @@
 import 'source-map-support/register';
 
-import { createLogger } from '../../logger';
-import { createHttpHandler } from '../util';
-import { verifyGitHubSignature as isSignatureValid } from '../../auth';
-import { GitHubWebhookPayload } from '../../requests';
-import { createGitHubPush } from '../../services';
+import { createLogger } from '../logger';
+import { createHttpHandler } from './util';
+import { verifyGitHubSignature as isSignatureValid } from '../auth';
+import { GitHubWebhookPayload } from '../requests';
+import { createGitHubPush } from '../services';
 
 const logger = createLogger('http/createGitHubActivity');
 

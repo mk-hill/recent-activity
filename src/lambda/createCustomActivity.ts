@@ -1,8 +1,8 @@
 import 'source-map-support/register';
 
-import { createLogger } from '../../logger';
-import { createActivity } from '../../services';
-import { createHttpHandler } from '../util';
+import { createLogger } from '../logger';
+import { createActivity } from '../services';
+import { createHttpHandler } from './util';
 
 const logger = createLogger('http/createCustomActivity');
 

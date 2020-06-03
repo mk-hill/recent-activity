@@ -1,9 +1,9 @@
 import 'source-map-support/register';
 
-import { createLogger } from '../../logger';
-import { createHttpHandler } from '../util';
-import { GitLabMergeRequestPayload } from '../../requests';
-import { createMergeRequest } from '../../services';
+import { createLogger } from '../logger';
+import { createHttpHandler } from './util';
+import { GitLabMergeRequestPayload } from '../requests';
+import { createMergeRequest } from '../services';
 
 const logger = createLogger('http/createGitLabActivity');
 

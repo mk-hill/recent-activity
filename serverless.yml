@@ -46,7 +46,7 @@ functions:
     handler: src/lambda/auth.handler
 
   GetRecent:
-    handler: src/lambda/http/getRecentActivity.handler
+    handler: src/lambda/getRecentActivity.handler
     events:
       - http:
           method: get
@@ -67,7 +67,7 @@ functions:
         Resource: '*'
 
   CreateCustomActivity:
-    handler: src/lambda/http/createCustomActivity.handler
+    handler: src/lambda/createCustomActivity.handler
     events:
       - http:
           method: post
@@ -91,7 +91,7 @@ functions:
   CreateGitHubActivity:
     environment:
       GITHUB_SECRET: ${env:GITHUB_SECRET}
-    handler: src/lambda/http/createGitHubActivity.handler
+    handler: src/lambda/createGitHubActivity.handler
     events:
       - http:
           method: post
@@ -114,7 +114,7 @@ functions:
   CreateGitLabActivity:
     environment:
       GITLAB_USERNAME: ${env:GITLAB_USERNAME}
-    handler: src/lambda/http/createGitLabActivity.handler
+    handler: src/lambda/createGitLabActivity.handler
     events:
       - http:
           method: post
@@ -136,9 +136,8 @@ functions:
         Resource: '*'
 
   PublishGroupedActivities:
-    handler: src/lambda/schedule/publishGroupedActivities.handler
+    handler: src/lambda/publishGroupedActivities.handler
     events:
-      - schedule: cron(5 6 * * ? *)
       - stream:
           type: dynamodb
           batchSize: 1
@@ -147,6 +146,12 @@ functions:
             Fn::GetAtt:
               - ActivitiesTable
               - StreamArn
+      - schedule: cron(5 6 * * ? *)
+      - http:
+          method: patch
+          path: 'publish'
+          cors: true
+          authorizer: Auth
     iamRoleStatements:
       - Effect: Allow
         Action:

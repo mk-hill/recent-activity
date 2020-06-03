@@ -1,7 +1,7 @@
 import { createLogger } from '../../../logger';
 import { Activity, GitHubPush, MergeRequest, Commit, Repo, GitActivity } from '../../../models';
 import { categorizeActivities } from './categorizeActivities';
-import { ActivityDetail, createDetail } from './ActivityDetail';
+import { ActivityDetail, createDetail, createRepoDetails } from './ActivityDetail';
 import { GroupBy } from './groupActivities';
 import {
   referenceWords,
@@ -72,10 +72,12 @@ export class ActivityGroup {
     log.info('Created activity group', {
       groupSize: this.allActivities.length,
       gitHubPushes: this.pushes.length,
-      gitLabMergeRequests: this.mergeRequests.length,
-      commits: Object.keys(this.commits).length,
-      repos: this.repos.length,
-      activityTime: this.activityDate,
+      gitLabMergeRequests: this.mergeRequests.map((mr) => mr.title),
+      otherActivities: this.otherActivities.map((activity) => activity.title),
+      commits: this.commits.map((commit) => commit.message),
+      repos: this.repos.map((repo) => repo.name),
+      reposCreated: this.newRepos.length,
+      activityDate: this.activityDate,
     });
   }
 
@@ -136,9 +138,9 @@ export class ActivityGroup {
       const { num, word } = created;
       if (numCreated === 1) {
         const { isPrivate, name, url } = this.repos[0];
-        return `Created a new repository${!isPrivate ? `: ${link(name, url)}` : ''}`;
+        return `Created a repository${!isPrivate ? `: ${link(name, url)}` : ''}`;
       } else {
-        return `Created ${num} new ${word}${numCommits > numCreated ? ` and ${commit.num} ${commit.word}` : ''}`; // Initial commit redundant
+        return `Created ${num} ${word}${numCommits > numCreated ? ` and ${commit.num} ${commit.word}` : ''}`; // Initial commit redundant
       }
     }
 
@@ -166,7 +168,7 @@ export class ActivityGroup {
 
     if (numCommits && numMergeRequests) {
       return numCreated
-        ? `Created ${created.num} ${created.word}, ${commit.num} ${commit.word}, and ${mr.num} ${mr.word}`
+        ? `Created ${created.num} ${created.word}, ${mr.num} ${mr.word}, and ${commit.num} ${commit.word}`
         : `Created ${commit.num} ${commit.word} and ${mr.num} ${mr.word} in ${repo.num} ${repo.word}`;
     }
 
@@ -257,61 +259,17 @@ export class ActivityGroup {
     }
 
     const numDetails = this.numberOfDetailsWhichCanBeRendered;
-    const canRenderAll = numDetails <= this.maxDetailItemsToRender;
-    const hasMultipleRepos = this.repos.length > 1;
-    const hasMultipleDetails = numDetails > 1;
-    const details: ActivityDetail[] = [];
 
-    this.otherActivities.forEach((activity) => {
-      details.push(createDetail(titleWithLinks(activity), activity.date));
-    });
+    const repoDetailOptions = {
+      numDetails,
+      numRepos: this.repos.length,
+      groupCommits: numDetails > this.maxDetailItemsToRender,
+    };
 
-    this.repos.forEach(({ isPrivate, name, commits, mergeRequests, url, creationActivity }) => {
-      const numCommits = commits.length;
-      const numMrs = mergeRequests.length;
-      const numMerged = mergeRequests.filter((mr) => mr.state === 'merged').length;
-      const { commit, mr } = referenceWords(1, numCommits, numMrs, numMerged);
-      if (numCommits) {
-        // GitHub pushes
-        const { num, word } = commit;
-        if (isPrivate) {
-          // Don't duplicate title for single private repo activity
-          if (hasMultipleDetails) details.push(createDetail(`Created ${num} ${word} in a private repository`, commits));
-        } else {
-          if (hasMultipleRepos && creationActivity) {
-            details.push(createDetail(`Created a new repository: ${link(name, url)}`, creationActivity.date));
-          }
-          if (canRenderAll) {
-            commits.forEach(({ message, url: commitUrl, date }) => {
-              const repoLink = hasMultipleRepos ? `${link(name, url)}: ` : ''; // Don't add redundant repo name
-              details.push(createDetail(`${repoLink}${link(message, commitUrl)}`, date));
-            });
-          } else {
-            details.push(createDetail(`Created ${num} ${word} in ${link(name, url)}`, commits));
-          }
-        }
-      } else {
-        // GitLab merge requests - assumed private
-        const { num, word, matching, were } = mr;
-        // No detail to create if single open request
-        if (hasMultipleDetails || this.mergeRequests[0].state === 'merged') {
-          let displayDate = mostRecentDate(mergeRequests);
-          let openText = `Opened ${num} ${word} in a private repository`;
-          let mergedText = matching ? `${matching} ${were} merged` : '';
-          const delim = ', ';
-
-          if (!hasMultipleDetails && matching) {
-            // Single merged request
-            openText = ''; // Don't repeat title
-            const mergeDate = new Date(this.mergeRequests[0].mergedAt);
-            if (isSameDay(mergeDate, displayDate)) displayDate = mergeDate; // Display merge date instead since opening mr isn't mentioned
-            mergedText = `${mergedText[0].toUpperCase()}${mergedText.slice(1)}`;
-          }
-
-          details.push(createDetail(`${openText}${openText && mergedText ? delim : ''}${mergedText}`, displayDate));
-        }
-      }
-    });
+    const details: ActivityDetail[] = [
+      ...this.otherActivities.map((activity) => createDetail(titleWithLinks(activity), activity.date)),
+      ...this.repos.map((repo) => createRepoDetails(repo, repoDetailOptions)).flat(),
+    ];
 
     return sortByDate(details).slice(0, this.maxDetailItemsToRender);
   }
