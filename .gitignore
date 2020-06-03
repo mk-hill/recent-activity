@@ -12,3 +12,4 @@ jspm_packages
 .env
 .vscode
 vscode
+*postman_collection.json

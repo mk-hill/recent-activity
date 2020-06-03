@@ -19,5 +19,5 @@ rules:
   no-use-before-define: off
   '@typescript-eslint/no-use-before-define': warn
   import/extensions: off
-  max-len: [warn, 140]
+  max-len: [warn, 132]
   '@typescript-eslint/explicit-function-return-type': off
