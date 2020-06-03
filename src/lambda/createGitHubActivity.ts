@@ -27,14 +27,15 @@ async function eventHandler(event) {
   }
 
   const payload: GitHubWebhookPayload = JSON.parse(body);
+  const { commits, compare: diffUrl } = payload;
 
-  if (payload.pusher.name !== 'mk-hill' || event.headers['X-GitHub-Event'] !== 'push') {
+  if (payload.pusher.name !== 'mk-hill' || event.headers['X-GitHub-Event'] !== 'push' || !commits?.length) {
     return {
       statusCode: 422,
     };
   }
+
   const { id: activityId, timestamp: performedAt } = payload.head_commit;
-  const { commits, compare: diffUrl } = payload;
   const { name: repoName, url: repoUrl, private: isPrivate } = payload.repository;
 
   const createdActivity = await createGitHubPush({ activityId, commits, diffUrl, repoName, repoUrl, isPrivate, performedAt });

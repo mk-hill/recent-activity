@@ -15,9 +15,15 @@ export function buildRecentActivityHtml(activities: Activity[], groupBy?: GroupB
 
     activities.forEach(populateDates);
 
-    return sortAllByDate(groupActivities(activities, groupBy), true).map((activitiesInSingleGroup) =>
-      ActivityGroup.toHtml(activitiesInSingleGroup, groupBy)
-    );
+    return sortAllByDate(groupActivities(activities, groupBy), true)
+      .map((activitiesInSingleGroup) => {
+        try {
+          return ActivityGroup.toHtml(activitiesInSingleGroup, groupBy);
+        } catch (error) {
+          log.error('Skipping group', { activitiesInSingleGroup, error });
+        }
+      })
+      .filter(Boolean);
   } catch (error) {
     log.error('Unable to build recent activity HTML', { error });
     throw error;

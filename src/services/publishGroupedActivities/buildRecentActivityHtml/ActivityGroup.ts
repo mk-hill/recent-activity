@@ -172,7 +172,9 @@ export class ActivityGroup {
         : `Created ${commit.num} ${commit.word} and ${mr.num} ${mr.word} in ${repo.num} ${repo.word}`;
     }
 
-    return 'Multiple activities';
+    log.error('No title specified for this combination of activities', { group: this });
+
+    throw new Error('Unhandled case, cannot determine title for group');
   }
 
   get activityDateHtml(): string {
