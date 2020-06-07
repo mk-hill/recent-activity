@@ -1,6 +1,7 @@
 import { Activity } from '../../../models';
 
-export const link = (textContent: string, href: string): string => `<a href="${href}" target="blank">${textContent}</a>`;
+export const link = (textContent: string, href: string, focusable = true): string =>
+  `<a href="${href}" target="blank"${!focusable ? ' tabindex="-1"' : ''}>${textContent}</a>`;
 
 export const referenceWords = (
   repos: number,
@@ -32,7 +33,7 @@ export function descriptionWithLinks(activity: Activity): string {
   if (!activity?.links?.description) return activity.description;
   const { description, links } = activity;
   return Object.entries(links.description).reduce(
-    (descriptionText, [linkContent, linkUrl]) => descriptionText.replace(linkContent, link(linkContent, linkUrl)),
+    (descriptionText, [linkContent, linkUrl]) => descriptionText.replace(linkContent, link(linkContent, linkUrl, false)),
     description
   );
 }

@@ -84,7 +84,7 @@ export class ActivityGroup {
   get html(): string {
     return `
             <li class="${this.listItemClass}">
-              <div class="activity-main">
+              <div class="activity-main"${this.hasDetail ? ' tabindex="0"' : ''}>
                 <div class="activity-left">
                   <svg class="activity-icon" xmlns="http://www.w3.org/2000/svg" viewBox="${this.iconViewBox}">
                     <use href="#path-${this.iconName}"></use>

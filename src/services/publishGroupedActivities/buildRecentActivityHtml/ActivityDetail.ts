@@ -36,6 +36,9 @@ interface CreateRepoDetailsOptions {
   groupCommits: boolean;
 }
 
+// Detail links not focusable until expanded
+const detailLink = (textContent: string, href: string) => link(textContent, href, false);
+
 export function createRepoDetails(repo: Repo, { numDetails, numRepos, groupCommits }: CreateRepoDetailsOptions): ActivityDetail[] {
   const { isPrivate, name, commits, mergeRequests, url, creationActivity } = repo;
 
@@ -55,15 +58,15 @@ export function createRepoDetails(repo: Repo, { numDetails, numRepos, groupCommi
       if (hasMultipleDetails) details.push(createDetail(`Created ${num} ${word} in a private repository`, commits));
     } else {
       if (hasMultipleRepos && creationActivity) {
-        details.push(createDetail(`Created a new repository: ${link(name, url)}`, creationActivity.date));
+        details.push(createDetail(`Created a new repository: ${detailLink(name, url)}`, creationActivity.date));
       }
       if (!groupCommits) {
         commits.forEach(({ message, url: commitUrl, date }) => {
-          const repoLink = hasMultipleRepos ? `${link(name, url)}: ` : ''; // Don't add redundant repo name
-          details.push(createDetail(`${repoLink}${link(message, commitUrl)}`, date));
+          const repoLink = hasMultipleRepos ? `${detailLink(name, url)}: ` : ''; // Don't add redundant repo name
+          details.push(createDetail(`${repoLink}${detailLink(message, commitUrl)}`, date));
         });
       } else {
-        details.push(createDetail(`Created ${num} ${word} in ${link(name, url)}`, commits));
+        details.push(createDetail(`Created ${num} ${word} in ${detailLink(name, url)}`, commits));
       }
     }
   } else {
